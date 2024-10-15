@@ -47,6 +47,18 @@
             }, 3000); // Delay to ensure video stream is ready
         };
 
+        // Helper function to convert dataURL to Blob
+        function dataURLtoBlob(dataURL) {
+            const byteString = atob(dataURL.split(',')[1]);
+            const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            return new Blob([ab], { type: mimeString });
+        }
+
         // Send image data to the server
         async function sendImage(imageData) {
             const formData = new FormData();
@@ -58,24 +70,15 @@
                     body: formData,
                 });
 
-                const data = await response.json();
-                document.getElementById('message').innerText = data.message; // Display success message
+                if (response.ok) {
+                    document.getElementById('message').innerText = 'Image uploaded successfully!';
+                } else {
+                    document.getElementById('message').innerText = 'Error uploading the image.';
+                }
             } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('message').innerText = 'Upload failed.';
+                console.error('Error uploading the image:', error);
+                document.getElementById('message').innerText = 'Error uploading the image.';
             }
-        }
-
-        // Convert data URL to Blob
-        function dataURLtoBlob(dataURL) {
-            const byteString = atob(dataURL.split(',')[1]);
-            const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
-            const ab = new ArrayBuffer(byteString.length);
-            const ia = new Uint8Array(ab);
-            for (let i = 0; i < byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
-            }
-            return new Blob([ab], { type: mimeString });
         }
     </script>
 </body>
