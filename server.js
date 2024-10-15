@@ -11,20 +11,17 @@ const PORT = process.env.PORT || 3001;
 app.use(express.static('public')); // Assuming index.html is in 'public'
 
 //Log the google cloud key for debugging
-console.log('Google Cloud Key:', GOOGLE_APPLICATION_CREDENTIALS) //checks if the environment variable is loaded correctly
+console.log('Google Cloud Key:', process.env.GOOGLE_APPLICATION_CREDENTIALS); // logs the environment variable to verify
 
 // Initialize Google Cloud Storage
 let storage, bucket;
 
 try {
-  // Load Google Cloud credentials from the environment variable
-  const googleCredentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+  // Automatically uses credentials from the environment, no need to parse the JSON manually
+  storage = new Storage();
 
-  storage = new Storage({
-    credentials: googleCredentials, // Use the credentials from the environment variable
-  });
-
-  bucket = storage.bucket('camera-app-bucket-1589'); // google cloud storage bucket name
+  // Use the bucket name from the environment variable
+  bucket = storage.bucket(process.env.GOOGLE_CLOUD_STORAGE_BUCKET); // google cloud storage bucket name
 } catch (error) {
   console.error('Error initializing Google Cloud Storage:', error);
   process.exit(1); // Exit if initialization fails
@@ -48,7 +45,7 @@ app.post('/upload', upload.single('image'), async (req, res) => {
   });
 
   blobStream.on('error', (err) => {
-    console.error('Upload error:', err); //log detailed error to console
+    console.error('Upload error:', err); // log detailed error to console
     res.status(500).send({ error: 'Failed to upload image', details: err.message });
   });
 
