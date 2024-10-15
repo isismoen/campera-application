@@ -10,6 +10,9 @@ const PORT = process.env.PORT || 3001;
 // Serve static files from the public directory
 app.use(express.static('public')); // Assuming index.html is in 'public'
 
+//Log the google cloud key for debugging
+console.log('Google Cloud Key:', GOOGLE_APPLICATION_CREDENTIALS) //checks if the environment variable is loaded correctly
+
 // Initialize Google Cloud Storage
 let storage, bucket;
 
