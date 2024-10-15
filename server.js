@@ -14,10 +14,14 @@ app.use(express.static('public')); // Assuming index.html is in 'public'
 let storage, bucket;
 
 try {
+  // Load Google Cloud credentials from the environment variable
+  const googleCredentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+
   storage = new Storage({
-    keyFilename: 'C:/Users/isism/json-key-camera-app/original-guru-438705-t2-0dc7a22631ea.json', // Path to your JSON key file
+    credentials: googleCredentials, // Use the credentials from the environment variable
   });
-  bucket = storage.bucket('camera-app-bucket-1589'); // Replace with your bucket name
+
+  bucket = storage.bucket('camera-app-bucket-1589'); // google cloud storage bucket name
 } catch (error) {
   console.error('Error initializing Google Cloud Storage:', error);
   process.exit(1); // Exit if initialization fails
@@ -41,7 +45,8 @@ app.post('/upload', upload.single('image'), async (req, res) => {
   });
 
   blobStream.on('error', (err) => {
-    res.status(500).send(err);
+    console.error('Upload error:', err); //log detailed error to console
+    res.status(500).send({ error: 'Failed to upload image', details: err.message });
   });
 
   blobStream.on('finish', () => {
@@ -50,6 +55,11 @@ app.post('/upload', upload.single('image'), async (req, res) => {
   });
 
   blobStream.end(req.file.buffer); // End the stream and upload the file
+});
+
+//Explicit route to serve index.html from the public directory
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html')); // Ensure index.html is in 'public'
 });
 
 // Start server
